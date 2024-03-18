@@ -2,7 +2,7 @@
 This package implements the *axis-search graph construction* and the *Bernstein filtering algorithm*.
 
 ## Documentation
-The [documentation](https://github.com/RoyCCWang/SpatialGSP.jl) for examples.
+The [documentation](https://royccwang.github.io/SpatialGSP.jl/) for examples.
 
 
 ## Citation
