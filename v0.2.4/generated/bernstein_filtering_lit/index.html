@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Demo: Bernstein filtering · SpatialGSP.jl</title><meta name="title" content="Demo: Bernstein filtering · SpatialGSP.jl"/><meta property="og:title" content="Demo: Bernstein filtering · SpatialGSP.jl"/><meta property="twitter:title" content="Demo: Bernstein filtering · SpatialGSP.jl"/><meta name="description" content="Documentation for SpatialGSP.jl."/><meta property="og:description" content="Documentation for SpatialGSP.jl."/><meta property="twitter:description" content="Documentation for SpatialGSP.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">SpatialGSP.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Overview</a></li><li><a class="tocitem" href="../../api/">Public API</a></li><li class="is-active"><a class="tocitem" href>Demo: Bernstein filtering</a><ul class="internal"><li><a class="tocitem" href="#visualize-graph-signal."><span>visualize graph signal.</span></a></li><li class="toplevel"><a class="tocitem" href="#Graph-Laplacian"><span>Graph Laplacian</span></a></li><li class="toplevel"><a class="tocitem" href="#Visualize-the-action-of-each-operator"><span>Visualize the action of each operator</span></a></li><li class="toplevel"><a class="tocitem" href="#Bernstein-filtering"><span>Bernstein filtering</span></a></li><li class="toplevel"><a class="tocitem" href="#Convenience-routine"><span>Convenience routine</span></a></li></ul></li><li><a class="tocitem" href="../axis_lit/">Demo: Axis graph</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Demo: Bernstein filtering</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Demo: Bernstein filtering</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/RoyCCWang/SpatialGSP.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/RoyCCWang/SpatialGSP.jl/blob/main/examples/bernstein_filtering.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h1><p>Install dependencies</p><pre><code class="language-julia hljs">import Pkg
+let
+    pkgs = [&quot;PythonPlot&quot;, &quot;VisualizationBag&quot;, &quot;Images&quot;, &quot;SpatialGSP&quot;]
+    for pkg in pkgs
+        if Base.find_package(pkg) === nothing
+            Pkg.add(pkg)
+        end
+    end
+end;</code></pre><p>Load packages.</p><pre><code class="language-julia hljs">using LinearAlgebra
+using SparseArrays
+
+import PythonPlot
+const PLT = PythonPlot
+
+import VisualizationBag as VIZ
+import Images
+
+import SpatialGSP as GSP
+const Graphs = GSP.Graphs
+const NN = GSP.NN
+const Distances = GSP.Distances
+
+import Random
+Random.seed!(25);
+
+#Helper routines
+include(&quot;helpers/viz/misc.jl&quot;)
+include(&quot;helpers/image.jl&quot;);
+
+#Reset plot figures.
+fig_num = 1
+PLT.close(&quot;all&quot;);
+
+#Specify floating-point data type and dimension.
+T = Float64
+D = 2;</code></pre><pre><code class="nohighlight hljs">    CondaPkg Found dependencies: /home/roy/.julia/packages/PythonCall/F4kmJ/CondaPkg.toml
+    CondaPkg Found dependencies: /home/roy/.julia/packages/PythonPlot/KcWMF/CondaPkg.toml
+    CondaPkg Dependencies already up to date
+</code></pre><p>Load image data</p><pre><code class="language-julia hljs">img = loadkodakimage(T, &quot;./data/kodim23.png&quot;; discard_pixels = 1)
+x_nD, x_ranges = image2samples(img)
+sz_x = size(x_nD);</code></pre><p>Treat the grid-based data <code>x_nD</code> as a signal on a grid graph. Get the 1-hop neighbors:</p><pre><code class="language-julia hljs">nbs = GSP.getgridnbs(size(x_nD))
+x = vec(x_nD);</code></pre><h2 id="visualize-graph-signal."><a class="docs-heading-anchor" href="#visualize-graph-signal.">visualize graph signal.</a><a id="visualize-graph-signal.-1"></a><a class="docs-heading-anchor-permalink" href="#visualize-graph-signal." title="Permalink"></a></h2><pre><code class="language-julia hljs">fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    x_nD,
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;original image, x&quot;;
+    cmap = &quot;Greys_r&quot;,
+    matrix_mode = true
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-11.png" alt/></p><h1 id="Graph-Laplacian"><a class="docs-heading-anchor" href="#Graph-Laplacian">Graph Laplacian</a><a id="Graph-Laplacian-1"></a><a class="docs-heading-anchor-permalink" href="#Graph-Laplacian" title="Permalink"></a></h1><pre><code class="language-julia hljs">G = GSP.UnitGrid(nbs) # generate grid graph.
+graph = GSP.getgraph(G);</code></pre><p>Basic one-hop operators.</p><pre><code class="language-julia hljs">A = GSP.create_adjacency(G) # adjacency matrix
+deg = GSP.create_degree(G) # degree matrix.
+deg_inv = GSP.create_invdegree(T, G)
+L = GSP.create_laplacian(G); # combinatorial Laplacian matrix.</code></pre><p>Normalized Laplacian operators..</p><pre><code class="language-julia hljs">Ln = GSP.create_snlaplacian(T, G) # symmetric normalized Laplacian matrix.
+TL = GSP.create_rwlaplacian(T, G); # random-walk Laplacian matrix.</code></pre><h1 id="Visualize-the-action-of-each-operator"><a class="docs-heading-anchor" href="#Visualize-the-action-of-each-operator">Visualize the action of each operator</a><a id="Visualize-the-action-of-each-operator-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize-the-action-of-each-operator" title="Permalink"></a></h1><pre><code class="language-julia hljs">Ax = A*x
+Anx_pre = deg_inv*A*x
+Anx_post = A*deg_inv*x
+Lx = L*x
+Tx = TL*x
+Ln_x = Ln*x;</code></pre><p>Adjacency.</p><pre><code class="language-julia hljs">fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    reshape(Ax, sz_x),
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;Ax&quot;;
+    cmap = &quot;Greys_r&quot;,
+    matrix_mode = true,
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-21.png" alt/></p><p>Normalize inflow.</p><pre><code class="language-julia hljs">fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    reshape(Anx_pre, sz_x),
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;Anx_pre&quot;;
+    cmap = &quot;Greys_r&quot;,
+    matrix_mode = true,
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-23.png" alt/></p><p>Normalize outflow.</p><pre><code class="language-julia hljs">fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    reshape(Anx_post, sz_x),
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;Anx_post&quot;;
+    cmap = &quot;Greys_r&quot;,
+    matrix_mode = true,
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-25.png" alt/></p><p>Combinatorial Laplacian.</p><pre><code class="language-julia hljs">fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    reshape(Lx, sz_x),
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;Lx&quot;;
+    cmap = &quot;bwr&quot;,
+    matrix_mode = true,
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-27.png" alt/></p><p>Symmetric normalized Laplacian.</p><pre><code class="language-julia hljs">fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    reshape(Ln_x, sz_x),
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;Ln_x&quot;;
+    cmap = &quot;bwr&quot;,
+    matrix_mode = true,
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-29.png" alt/></p><p>Random-walk Laplacian.</p><pre><code class="language-julia hljs">fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    reshape(Tx, sz_x),
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;Tx&quot;;
+    cmap = &quot;bwr&quot;,
+    matrix_mode = true,
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-31.png" alt/></p><h1 id="Bernstein-filtering"><a class="docs-heading-anchor" href="#Bernstein-filtering">Bernstein filtering</a><a id="Bernstein-filtering-1"></a><a class="docs-heading-anchor-permalink" href="#Bernstein-filtering" title="Permalink"></a></h1><p>tuning parameters.</p><pre><code class="language-julia hljs">discount_factor = 0.5
+N_bands = 20
+Bernstein_degree = N_bands -1;</code></pre><p>computewarpsamplesiterated() operates under the assumption that the eigenvalues of <code>L_map</code> is in [0,λ_max].</p><pre><code class="language-julia hljs">λ_max = convert(T, 2)
+L_map = TL; # set to random-walk Laplacian.</code></pre><p>Visualize the Berinstein polynomial basis.</p><pre><code class="language-julia hljs">fig_num = visualizebernsteinbasis(
+    λ_max, Bernstein_degree, fig_num;
+    show_legend = false,
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-38.png" alt/></p><p>Get a set of fixed-spectrum warp samples.</p><pre><code class="language-julia hljs">Ws, Rs, λs = GSP.computewarpsamplesiterated(
+    x,
+    L_map,
+    GSP.BernsteinFBConfig(N_bands = N_bands, λ_max = λ_max);
+    iterate_threshold = convert(T, 10),
+    discount_factor = discount_factor,
+    max_iters = 10,
+    verbose = false,
+);</code></pre><p>visualize the original image.</p><pre><code class="language-julia hljs">fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    reshape(x_nD, sz_x),
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;the original signal: x_nD&quot;;
+    cmap = &quot;gray&quot;,
+    matrix_mode = true,
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-42.png" alt/></p><p>Visualize the sum</p><pre><code class="language-julia hljs">W1 = sum(Ws)
+fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    reshape(W1, sz_x),
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;W1&quot;;
+    cmap = &quot;bwr&quot;,
+    matrix_mode = true,
+    symmetric_color_range = true,
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-44.png" alt/></p><p>Visualize the normalized sum. Less noisy, thicker contours.</p><pre><code class="language-julia hljs">W2 = GSP.sumnormalized(Ws)
+fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    reshape(W2, sz_x),
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;W2&quot;;
+    cmap = &quot;bwr&quot;,
+    matrix_mode = true,
+    symmetric_color_range = true,
+)
+PLT.gcf()</code></pre><p><img src="../bernstein_filtering_lit-46.png" alt/></p><h1 id="Convenience-routine"><a class="docs-heading-anchor" href="#Convenience-routine">Convenience routine</a><a id="Convenience-routine-1"></a><a class="docs-heading-anchor-permalink" href="#Convenience-routine" title="Permalink"></a></h1><pre><code class="language-julia hljs">W2, G = GSP.get_grid_warp_samples(
+    x_nD,
+    GSP.WarpConfig{T}(),
+)
+fig_num = VIZ.plotmeshgrid2D(
+    PLT,
+    x_ranges,
+    reshape(W2, sz_x),
+    [],
+    &quot;x&quot;,
+    fig_num,
+    &quot;W2&quot;;
+    cmap = &quot;bwr&quot;,
+    matrix_mode = true,
+    symmetric_color_range = true,
+)
+PLT.gcf()
+
+nothing;</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../api/">« Public API</a><a class="docs-footer-nextpage" href="../axis_lit/">Demo: Axis graph »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Monday 18 March 2024 15:04">Monday 18 March 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
