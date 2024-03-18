@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Demo: Axis graph · SpatialGSP.jl</title><meta name="title" content="Demo: Axis graph · SpatialGSP.jl"/><meta property="og:title" content="Demo: Axis graph · SpatialGSP.jl"/><meta property="twitter:title" content="Demo: Axis graph · SpatialGSP.jl"/><meta name="description" content="Documentation for SpatialGSP.jl."/><meta property="og:description" content="Documentation for SpatialGSP.jl."/><meta property="twitter:description" content="Documentation for SpatialGSP.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">SpatialGSP.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Overview</a></li><li><a class="tocitem" href="../../api/">Public API</a></li><li><a class="tocitem" href="../bernstein_filtering_lit/">Demo: Bernstein filtering</a></li><li class="is-active"><a class="tocitem" href>Demo: Axis graph</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Axis-search-graph-construction"><span>Axis search graph construction</span></a></li><li class="toplevel"><a class="tocitem" href="#Visualize"><span>Visualize</span></a></li><li class="toplevel"><a class="tocitem" href="#Save-plot"><span>Save plot</span></a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Demo: Axis graph</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Demo: Axis graph</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/RoyCCWang/SpatialGSP.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/RoyCCWang/SpatialGSP.jl/blob/main/examples/axis.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h1><p>Install dependencies</p><pre><code class="language-julia hljs">import Pkg
+let
+    pkgs = [&quot;PlotlyLight&quot;, &quot;ColorSchemes&quot;, &quot;VisualizationBag&quot;, &quot;SpatialGSP&quot;]
+    for pkg in pkgs
+        if Base.find_package(pkg) === nothing
+            Pkg.add(pkg)
+        end
+    end
+end;</code></pre><p>Load packages.</p><pre><code class="language-julia hljs">using LinearAlgebra
+
+import PlotlyLight as PLY
+import ColorSchemes
+
+import VisualizationBag as VIZ
+import SpatialGSP as GSP
+
+import Random
+Random.seed!(25);</code></pre><p>Specify floating-point data type and dimension.</p><pre><code class="language-julia hljs">T = Float64
+D = 2;</code></pre><p>Scattered positions.</p><pre><code class="language-julia hljs">N = 20
+X = collect( randn(T, D) for _ = 1:N );
+
+#uncomment this if we want to see the graph generated from a grid instead of scattered positions.
+#X0 = vec(collect( Iterators.product(-5:4,-3:6) ))
+#X = collect( convert(Vector{T}, collect(x)) for x in X0)
+#N = length(X);</code></pre><h1 id="Axis-search-graph-construction"><a class="docs-heading-anchor" href="#Axis-search-graph-construction">Axis search graph construction</a><a id="Axis-search-graph-construction-1"></a><a class="docs-heading-anchor-permalink" href="#Axis-search-graph-construction" title="Permalink"></a></h1><p><code>η</code> controls the creation of edges from <code>X</code>. <code>w_lb</code> is the minimum edge weight. The other edges are weighted according to a square exponential kernel that attains <code>w_lb</code> for the shortest pair-wise distance in <code>X</code>. Larger values of <code>η</code> means the generated graph is more like a nearest neighbors graph. A lower value means the generated graph is more like a grid graph.</p><pre><code class="language-julia hljs">η = convert(T, 3)
+kernel_ref = GSP.SqExp(T)
+config = GSP.AxisSearchConfig{T}(
+    kernel_σ_multiplier = η,
+    make_undirected = true,
+    remove_null_nbs = true,
+    w_lb = convert(T, 0.1)
+);</code></pre><p>Construct the graph: Nodes are the points in <code>X</code>.</p><pre><code class="language-julia hljs">G = GSP.create_axis_graph(config, X);</code></pre><h1 id="Visualize"><a class="docs-heading-anchor" href="#Visualize">Visualize</a><a id="Visualize-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize" title="Permalink"></a></h1><pre><code class="language-julia hljs">width = 600 # plot width.
+height = 600; # plot height.</code></pre><p>Create edges</p><pre><code class="language-julia hljs">edge_h = GSP.getedgecoord(G, X, 1) # horizontal
+edge_v = GSP.getedgecoord(G, X, 2); # vertical</code></pre><p>Create a PlotlyJS trace for nodes.</p><pre><code class="language-julia hljs">x_h = map(xx-&gt;xx[begin], X)
+x_v = map(xx-&gt;xx[begin+1], X)
+N_nbs = GSP.getNnbs(G)
+
+nodes_trace = PLY.Config(
+    name = &quot;Node&quot;,
+    x = x_v,
+    y = x_h,
+    mode = &quot;markers&quot;,
+    text = [
+        &quot;Node $n, Neighbors: $(N_nbs[n])&quot;
+        for n in eachindex(N_nbs)
+    ],
+    marker = PLY.Config(
+        showscale = true,
+        colorscale = ColorSchemes.viridis,
+        color = N_nbs,
+        size = 10,
+        colorbar = PLY.Config(
+            thickness = 15,
+            title = &quot;Node Connections&quot;,
+            xanchor = &quot;left&quot;,
+            titleside = &quot;right&quot;
+      ),
+    ),
+);</code></pre><p>Create the PlotlyJS layout trace.</p><pre><code class="language-julia hljs">layout = PLY.Config(
+    width = width,
+    height = height,
+    margin = PLY.Config( # rid of white spaces around the saved plot.
+        l = 1, # measured in pixels. l for left, etc.
+        r = 1,
+        t = 1,
+        b = 1,
+    ),
+    hovermode = &quot;closest&quot;,
+    title = &quot;Connectivity $η&quot;,
+    titlefont = PLY.Config(
+        size = 16,
+    ),
+    showlegend = false,
+    showarrow = false,
+    xaxis = PLY.Config(
+        showgrid = false,
+        zeroline = false,
+        showticklabels = false,
+    ),
+    yaxis = PLY.Config(
+        showgrid = false,
+        zeroline = false,
+        showticklabels = false,
+    ),
+);</code></pre><p>Create the trace for edges and their midpoints. The implementation is in the <code>VisualizationBag</code> package.</p><pre><code class="language-julia hljs">eds, mid_pts_trace = VIZ.get2Dedgetraces_variablewidth(
+    PLY, G.edges.srcs, G.edges.dests, G.edges.ws, X,
+);</code></pre><pre><code class="language-julia hljs">v = vcat(eds...)
+push!(v, mid_pts_trace)
+push!(v, nodes_trace)
+ph = PLY.Plot(v, layout);</code></pre><h1 id="Save-plot"><a class="docs-heading-anchor" href="#Save-plot">Save plot</a><a id="Save-plot-1"></a><a class="docs-heading-anchor-permalink" href="#Save-plot" title="Permalink"></a></h1><pre><code class="language-julia hljs">#Uncomment to save as HTML.
+#PLY.save(ph, &quot;output/axis_graph_$(η).html&quot;)
+
+import PlotlyKaleido
+PlotlyKaleido.start()</code></pre><p>Pause the current Julia session until we save the image.</p><pre><code class="language-julia hljs">t = @task begin
+    (;data, layout, config) = ph
+    PlotlyKaleido.savefig(
+        ph,
+        &quot;axis_lit.svg&quot;;
+        width = width,
+        height = height,
+    )
+end
+schedule(t)
+wait(t);</code></pre><p><img src="../axis_lit.svg" alt="Constructed graph."/></p><p>The node colors correspond to the number of connections, and the thickness of an edge is proportional to the edge weight.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../bernstein_filtering_lit/">« Demo: Bernstein filtering</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Monday 18 March 2024 14:58">Monday 18 March 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
