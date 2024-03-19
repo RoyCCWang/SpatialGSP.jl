@@ -28,10 +28,6 @@ const Distances = GSP.Distances
 import Random
 Random.seed!(25);
 
-#Helper routines
-include("helpers/viz/misc.jl")
-include("helpers/image.jl");
-
 #Reset plot figures.
 fig_num = 1
 PLT.close("all");
@@ -39,6 +35,10 @@ PLT.close("all");
 #Specify floating-point data type and dimension.
 T = Float64
 D = 2;
+
+# The following helper scripts can be found in `examples/helpers/` from the root repository folder.
+include("helpers/viz/misc.jl")
+include("helpers/image.jl");
 
 # Load image data
 img = loadkodakimage(T, "./data/kodim23.png"; discard_pixels = 1)

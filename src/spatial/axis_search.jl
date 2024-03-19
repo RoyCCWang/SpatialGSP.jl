@@ -123,7 +123,8 @@ function pickcandidate(
 end
 
 function axiscosineangle(d, xn, x0)
-    p = copy(x0)
+    #p = copy(x0)
+    p = collect( val for val in x0 ) # ensures p is a Vector. Resolves the case when x0 is a StaticArrays.SVector
     p[d] = xn[d]
 
     a = p-x0
