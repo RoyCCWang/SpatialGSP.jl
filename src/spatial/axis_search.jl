@@ -288,11 +288,21 @@ function create_axis_graph(
     ) where AV <: AbstractVector
 
     w_lb = config.w_lb
+  
+    ## Performance assessment. This is O(DN^2), quite slow.
+    # println("starting findaxisnbs")
+    # @time nbs = findaxisnbs(config, X)
+    # println("Starting symconnections")
+    # @time srcs, dests = symconnections(nbs)
+    # println("Starting computedists")
+    # @time dists = computedists(metric, srcs, dests, X)
+    # println("Done verbose section")
+    ## end assessment.
     
     nbs = findaxisnbs(config, X)
     srcs, dests = symconnections(nbs)
     dists = computedists(metric, srcs, dests, X)
-    
+
     max_dist = maximum(dists)
     kernel = solve_createkernel(weight_kernel_ref, max_dist, w_lb)
     ws = map(xx->evalkernel(kernel, xx), dists)
